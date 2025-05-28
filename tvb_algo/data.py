@@ -17,7 +17,7 @@ def rm_cache():
     rmtree(_cache_folder())
 
 
-def tvb76_weights_lengths() -> tuple[list[list[float]], list[list[float]]]:
+def tvb76_weights_lengths():
     import zipfile, urllib.request
 
     cache_fname = os.path.join(_cache_folder(), "tvb76.npz")
@@ -36,6 +36,7 @@ def tvb76_weights_lengths() -> tuple[list[list[float]], list[list[float]]]:
             )
     npz = np.load(cache_fname)
 
-    # Return as plain python arrays (not numpy arrays)
+    W = npz["W"].tolist()
+    D = npz["D"].tolist()
 
-    return npz["W"].tolist(), npz["D"].tolist()
+    return W, D

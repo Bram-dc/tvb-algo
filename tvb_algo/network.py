@@ -1,65 +1,49 @@
-"""Network implementation including weights & delays."""
-
-from typing import Callable, List, Tuple
-from tvb_algo import helpers
-
-
-def extract_connections(
-    W: List[List[float]], D: List[List[float]], cut: float
-) -> Tuple[List[float], List[float], List[int], List[int]]:
-    """Return flat lists of weights, delays, row-indices and col-indices for W[i][j] > cut."""
-    w: List[float] = []
-    d: List[float] = []
-    rows: List[int] = []
-    cols: List[int] = []
-
-    for i, row in enumerate(W):
-        for j, val in enumerate(row):
-            if val > cut:
-                w.append(val)
-                d.append(D[i][j])
-                rows.append(i)
-                cols.append(j)
-
-    return w, d, rows, cols
+from typing import Callable
 
 
 def wm_ring(
-    W: List[List[float]],  # 2D weight matrix
-    D: List[List[float]],  # 2D delay matrix
+    W: list[list[float]],
+    D: list[list[float]],
     dt: float,
-    pre: Callable[[float, float], float],
+    pre: Callable[[list[float], list[float]], list[float]],
     post: Callable[[float], float],
-    ncv: int,
+    ncv: int = 1,
     cut: float = 0.0,
-) -> Callable[[int, List[List[float]]], List[List[float]]]:
-    """Build white‐matter connectome model with sparse weights, ring buffer."""
-    n = len(W[0])
-    w, d, rows, cols = extract_connections(W, D, cut)
-    di = [int(v / dt) for v in d]
-    H = (max(di) + 1) if di else 1
-    hist = helpers.zeros_3d(H, n, ncv)
+):
+    n = len(W)
+    adj: list[list[tuple[int, float, int]]] = []
+    max_delay = 0
+    for r in range(n):
+        row: list[tuple[int, float, int]] = []
+        for c in range(n):
+            w = W[r][c]
+            if w > cut:
+                delay = int(D[r][c] / dt)
+                row.append((c, w, delay))
+                if delay > max_delay:
+                    max_delay = delay
+        adj.append(row)
 
-    def step(step_idx: int, xi: List[List[float]]) -> List[List[float]]:
-        buf_idx = step_idx % H
-        hist[buf_idx] = [row.copy() for row in xi]
+    H = max_delay + 1
+    hist: list[list[list[float]]] = [[[0.0] * ncv for _ in range(n)] for _ in range(H)]
 
-        acc = helpers.zeros_2d(n, ncv)
-        for k in range(len(w)):
-            src = cols[k]
-            tgt = rows[k]
-            delay_idx = di[k]
-            past = hist[(step_idx - delay_idx) % H][src]
-            curr = xi[src]
-            wt = w[k]
-            for v in range(ncv):
-                acc[tgt][v] += wt * pre(curr[v], past[v])
+    active_nodes = [r for r, outs in enumerate(adj) if outs]
 
-        out = helpers.zeros_2d(n, ncv)
-        for r in set(rows):
-            for v in range(ncv):
-                out[r][v] = post(acc[r][v])
+    def step(i: int, xi: list[list[float]]) -> list[list[float]]:
+        hist[i % H] = xi
+        gx = [0.0] * n
+        for r in active_nodes:
+            total = 0.0
+            for c, w_rc, delay in adj[r]:
+                xj = hist[(i - delay) % H][c]
+                xi_r = xi[r]
+                pre_val = pre(xi_r, xj)
+                total += w_rc * pre_val[0]
+            gx[r] = post(total)
 
+        out = [[0.0] * ncv for _ in range(n)]
+        for r in active_nodes:
+            out[r][0] = gx[r]
         return out
 
     return step
