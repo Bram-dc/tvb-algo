@@ -3,5 +3,6 @@
 lib/__pycache__
 base/__pycache__
 numpy/__pycache__
+jit/__pycache__
 venv.pyc
 .venv
