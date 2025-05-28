@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import logging
-from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,7 @@ def tvb76_weights_lengths():
             )
     npz = np.load(cache_fname)
 
-    W: NDArray[np.float64] = npz["W"]
-    D: NDArray[np.float64] = npz["D"]
+    W = npz["W"].tolist()
+    D = npz["D"].tolist()
 
     return W, D

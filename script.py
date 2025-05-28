@@ -1,150 +1,105 @@
 import math
-from typing import Callable, Generator, Tuple
-from matplotlib.pylab import rand
-from tvb_algo import data
+import random
+from typing import Callable
 import numpy as np
-from numpy.typing import NDArray
 import matplotlib.pyplot as plt
+from tvb_algo import data, network, deint
+import time
+from tqdm import tqdm
 
-print("downloading weights")
 W, D = data.tvb76_weights_lengths()
-
-print(W.shape, D.shape)
-# (76, 76) (76, 76)
+n = len(W)
 
 
-def em_color(
-    f: Callable[[int, NDArray[np.float64]], np.ndarray],
-    g: Callable[[int, np.ndarray], float],
-    dt: float,
-    lam: float,
-    x: np.ndarray,
-) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
-    """Euler-Maruyama for colored noise."""
-    i: int = 0
-    nd = x.shape
-    e: np.ndarray = np.sqrt(g(i, x) * lam) * np.random.randn(*nd)
-    E: float = np.exp(-lam * dt)
-    while True:
-        yield x, e
-        i += 1
-        x += dt * (f(i, x) + e)
-        h: np.ndarray = np.sqrt(g(i, x) * lam * (1 - E**2)) * np.random.randn(*nd)
-        e = e * E + h
-
-
-def wm_ring(
-    W: np.ndarray,
-    D: np.ndarray,
-    dt: float,
-    pre: Callable[[np.ndarray, np.ndarray], np.ndarray],
-    post: Callable[[np.ndarray], np.ndarray],
-    ncv: int,
-    cut: float = 0.0,
-    icf: Callable[[np.ndarray], np.ndarray] = lambda h: h,
-) -> Callable[[int, np.ndarray], np.ndarray]:
-    """Build white matter connectome model with sparse weights, ring buffer."""
-    n: int = W.shape[0]
-    mask: np.ndarray = W > cut
-    w: np.ndarray = W[mask]
-    d: np.ndarray = D[mask]
-    di: np.ndarray = (d / dt).astype(int)
-    r, c = np.nonzero(mask)
-    lri: np.ndarray = np.unique(r, return_index=True)[1]
-    nzr: np.ndarray = np.unique(r)
-    H: int = di.max() + 1
-    hist: np.ndarray = icf(np.zeros((H, n, ncv), dtype=float))
-
-    def step(i: int, xi: np.ndarray) -> np.ndarray:
-        hist[i % H] = xi
-        xj: np.ndarray = hist[(i - di) % H, c]
-        gx: np.ndarray = np.add.reduceat((w * pre(xi[c], xj).T).T, lri)
-        out: np.ndarray = np.zeros_like(xi)
-        out[nzr] = post(gx)
-        return out
-
-    return step
-
-
-def sim(
+def simulate(
     dt: float = 0.05,
     tf: float = 150.0,
     k: float = 0.0,
     speed: float = 1.0,
     freq: float = 1.0,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Run the neural mass simulation with given parameters."""
-    n: int = W.shape[0]
-    # pre- and post-synaptic coupling functions
-    pre: Callable[[np.ndarray, np.ndarray], np.ndarray] = lambda i, j: j - 1.0
-    post: Callable[[np.ndarray], np.ndarray] = lambda gx: k * gx
-    prop: Callable[[int, np.ndarray], np.ndarray] = wm_ring(
-        W, D / speed, dt, pre, post, ncv=1
-    )
+) -> tuple[list[float], list[list[list[float]]]]:
+    n = len(W)
 
-    def f(i: int, X: np.ndarray) -> np.ndarray:
-        X_list = X.tolist()
-        x_list = [pair[0] for pair in X_list]
-        y_list = [pair[1] for pair in X_list]
+    pre: Callable[[list[float], list[float]], list[float]] = lambda xi, xj: [
+        xj[0] - 1.0
+    ]
+    post: Callable[[float], float] = lambda gx: k * gx
 
-        x_input = [[x] for x in x_list]
-        c_arr = prop(i, np.array(x_input))
-        c_list = c_arr.flatten().tolist()
+    D_speed = [[D[r][c] / speed for c in range(n)] for r in range(n)]
 
-        dx_list = []
-        dy_list = []
-        for x, y, c in zip(x_list, y_list, c_list):
-            dx = freq * (x - x**3 / 3 + y) * 3.0
-            dy = freq * (1.01 - x + c) / 3.0
-            dx_list.append(dx)
-            dy_list.append(dy)
+    prop = network.wm_ring(W, D_speed, dt, pre, post, ncv=1, cut=0.0)
 
-        out = np.empty((len(dx_list), 2), dtype=float)
-        for idx, (dx, dy) in enumerate(zip(dx_list, dy_list)):
-            out[idx, 0] = dx
-            out[idx, 1] = dy
-        return out
+    def f(i: int, X: list[list[float]]) -> list[list[float]]:
+        x_vals = [X[r][0] for r in range(n)]
+        y_vals = [X[r][1] for r in range(n)]
+        inp = [[x] for x in x_vals]
+        c_out = prop(i, inp)
+        c_list = [c_out[r][0] for r in range(n)]
 
-    def g(i: int, X: NDArray[np.float64]) -> float:
+        dx = [0.0] * n
+        dy = [0.0] * n
+        for r in range(n):
+            x, y, c = x_vals[r], y_vals[r], c_list[r]
+            dx[r] = freq * (x - x**3 / 3 + y) * 3.0
+            dy[r] = freq * (1.01 - x + c) / 3.0
+
+        return [[dx[r], dy[r]] for r in range(n)]
+
+    def g(i: int, X: list[list[float]]) -> float:
         return math.sqrt(1e-9)
 
-    X_init: NDArray[np.float64] = np.zeros((n, 2))
-    Xs: NDArray[np.float64] = np.zeros((int(tf / dt), n, 2))
-    T: NDArray[np.float64] = np.arange(Xs.shape[0])
+    steps = int(tf / dt)
+    X = [[0.0, 0.0] for _ in range(n)]
+    Xs: list[list[list[float]]] = []
+    gen = deint.em_color(f, g, dt, lam=1e-1, x0=X)
 
-    for t, (x, _) in zip(T, em_color(f, g, dt, lam=1e-1, x=X_init)):
+    for t in range(steps):
+        x, _ = next(gen)
         if t == 0:
-            x[:] = -1.0
+            for r in range(n):
+                x[r][0] = x[r][1] = -1.0
         elif t == 1:
-            x[:] = rand(n, 2) / 5 + np.array([1.0, -0.6])
-        Xs[t] = x
+            for r in range(n):
+                x[r][0] = random.random() / 5 + 1.0
+                x[r][1] = random.random() / 5 - 0.6
+        Xs.append([x[r].copy() for r in range(n)])
+
+    T = [t * dt for t in range(steps)]
     return T, Xs
 
 
 dt = 0.05
-plt.figure(figsize=(12, 6))
-from time import time
-from tqdm import tqdm
 
+
+plt.figure(figsize=(12, 6))
 elapsed = 0.0
-speeds = [1.0, 2.0, 10.0]
-for i, speed in enumerate(tqdm(speeds)):
-    tic = time()
-    t, x = sim(dt, 150.0, 1e-3, speed)
-    elapsed += time() - tic
+for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
+    tic = time.time()
+    T, Xs = simulate(dt, 150.0, k=1e-3, speed=speed)
+    elapsed += time.time() - tic
+
+    # convert to arrays for slicing & hist
+    T_np = np.array(T)
+    Xs_np = np.array(Xs)  # shape (steps, n, 2)
+    delays = (np.array(D)[np.array(W) != 0] / speed).flatten()
+
+    # top row: all x-traces
     plt.subplot(2, 3, i + 1)
-    plt.plot(t[::5] * dt, x[::5, :, 0] + 0 * np.r_[: W.shape[0]], "k", alpha=0.3)
+    plt.plot(T_np[::5], Xs_np[::5, :, 0], "k", alpha=0.3)
     plt.grid(True, axis="x")
-    plt.xlim([0, t[-1] * dt])
-    plt.title("Speed = %g mm/ms" % (speed,))
+    plt.xlim(0, T_np[-1])
+    plt.title(f"Speed = {speed} mm/ms")
     plt.xlabel("time (ms)")
     plt.ylabel("X(t)")
+
+    # bottom row: histogram of delays
     plt.subplot(2, 3, i + 4)
-    plt.hist((D[W != 0] / speed).flat[:], 100, color="k")
-    plt.xlim([0, t[-1] * dt])
+    plt.hist(delays, bins=100)
     plt.grid(True)
     plt.xlabel("delay (ms)")
     plt.ylabel("# delay")
+    plt.xlim(0, T_np[-1])
+
 plt.tight_layout()
-print("%.3fs elapsed" % (elapsed,))
+print(f"{elapsed:.3f}s elapsed")
 plt.show()
