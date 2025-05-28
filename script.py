@@ -78,12 +78,13 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
     T, Xs = simulate(dt, 150.0, k=1e-3, speed=speed)
     elapsed += time.time() - tic
 
-    # convert to arrays for slicing & hist
+    D_np = np.array(D)
+    W_np = np.array(W)
     T_np = np.array(T)
-    Xs_np = np.array(Xs)  # shape (steps, n, 2)
-    delays = (np.array(D)[np.array(W) != 0] / speed).flatten()
+    Xs_np = np.array(Xs)
 
-    # top row: all x-traces
+    delays = (D[W != 0] / speed).flatten()
+
     plt.subplot(2, 3, i + 1)
     plt.plot(T_np[::5], Xs_np[::5, :, 0], "k", alpha=0.3)
     plt.grid(True, axis="x")
@@ -92,7 +93,6 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
     plt.xlabel("time (ms)")
     plt.ylabel("X(t)")
 
-    # bottom row: histogram of delays
     plt.subplot(2, 3, i + 4)
     plt.hist(delays, bins=100)
     plt.grid(True)
