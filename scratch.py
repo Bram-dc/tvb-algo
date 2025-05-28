@@ -1,18 +1,15 @@
+import math
 from typing import Callable
 from matplotlib.pylab import rand
 import matplotlib.pyplot as plt
-from tvb_algo import data, deint, network
+from tvb_algo import data, deint, network, helpers
 from time import time
 from tqdm import tqdm
 import numpy as np
 
 W, D = data.tvb76_weights_lengths()
 
-
-def normalize_tract_lengths(D: list[list[float]], speed: float) -> list[list[float]]:
-    for i in range(len(D)):
-        for j in range(len(D[i])):
-            D[i][j] = D[i][j] / speed
+from typing import Callable, List
 
 
 def sim(
@@ -25,20 +22,26 @@ def sim(
     n = len(W[0])
     pre: Callable[[float, float], float] = lambda i, j: j - 1.0
     post: Callable[[float], float] = lambda gx: k * gx
-    prop = network.wm_ring(W, normalize_tract_lengths(D, speed), dt, pre, post, 1)
+    prop = network.wm_ring(W, helpers.divide_2d(D, speed), dt, pre, post, 1)
 
-    def f(i, X):  # monostable
-        x, y = X.T
-        (c,) = prop(i, x.reshape((-1, 1))).T
-        dx = freq * (x - x**3 / 3 + y) * 3.0
-        dy = freq * (1.01 - x + c) / 3.0
+    def f(i: int, X: list[list[float]]):  # monostable
+        result: list[list[float]] = []
 
-        return np.array([dx, dy]).T
+        for i, (x, y) in enumerate(X):
+            # TODO: Outside of the loop, we can compute c once
+            c = prop(i, [[xi] for xi in X[i]])[0][0]
 
-    def g(i, X):  # additive linear noise
-        return np.sqrt(1e-9)
+            dx = freq * (x - x**3 / 3 + y) * 3.0
+            dy = freq * (1.01 - x + c) / 3.0
 
-    X = np.zeros((n, 2))
+            result.append([dx, dy])
+
+        return result
+
+    def g(i: int, X: list[list[float]]):  # additive linear noise
+        return math.sqrt(1e-9)
+
+    X = helpers.zeros_2d(n, 2)
     Xs = np.zeros((int(tf / dt),) + X.shape)
     T = np.r_[: Xs.shape[0]]
     for t, (x, _) in zip(T, deint.em_color(f, g, dt, 1e-1, X)):
