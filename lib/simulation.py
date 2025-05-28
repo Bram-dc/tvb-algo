@@ -6,11 +6,11 @@ from . import network, deint
 def simulate(
     W: list[list[float]],
     D: list[list[float]],
-    dt: float = 0.05,
-    tf: float = 150.0,
-    k: float = 0.0,
-    speed: float = 1.0,
-    freq: float = 1.0,
+    dt: float,
+    tf: float,
+    k: float,
+    speed: float,
+    freq: float,
 ) -> tuple[list[float], list[list[list[float]]]]:
     n = len(W)
 

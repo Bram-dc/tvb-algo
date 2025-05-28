@@ -1,5 +1,6 @@
 .idea
 .ipynb_checkpoints
-tvb_algo/__pycache__
+lib/__pycache__
+original/__pycache__
 venv.pyc
 .venv
