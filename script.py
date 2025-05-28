@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from data import data
-from lib import simulation, plot
+from lib import data
+from base import simulation, plot
 import time
 from tqdm import tqdm
 
@@ -30,4 +30,4 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
 print(f"{elapsed:.3f}s elapsed")
 
 fig.tight_layout()
-# plt.show()  # type: ignore
+plt.show()  # type: ignore

@@ -1,5 +1,6 @@
 from typing import Any
 from matplotlib.pylab import rand
+from lib.random import randomness_enabled
 from . import deint, network
 import numpy as np
 import math
@@ -36,6 +37,7 @@ def simulate(
         if t == 0:
             x[:] = -1.0
         if t == 1:
-            x[:] = rand(n, 2) / 5 + np.r_[1.0, -0.6]
+            r = rand(n, 2) if randomness_enabled() else np.full((n, 2), 0.5)
+            x[:] = r / 5 + np.r_[1.0, -0.6]
         Xs[t] = x
     return T, Xs

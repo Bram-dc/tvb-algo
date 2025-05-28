@@ -1,6 +1,7 @@
 .idea
 .ipynb_checkpoints
 lib/__pycache__
-original/__pycache__
+base/__pycache__
+numpy/__pycache__
 venv.pyc
 .venv
