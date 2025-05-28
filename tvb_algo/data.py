@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import logging
+from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ def rm_cache():
     rmtree(_cache_folder())
 
 
-def tvb76_weights_lengths() -> tuple[list[list[float]], list[list[float]]]:
+def tvb76_weights_lengths():
     import zipfile, urllib.request
 
     cache_fname = os.path.join(_cache_folder(), "tvb76.npz")
@@ -36,4 +37,7 @@ def tvb76_weights_lengths() -> tuple[list[list[float]], list[list[float]]]:
             )
     npz = np.load(cache_fname)
 
-    return npz["W"], npz["D"]
+    W: NDArray[np.float64] = npz["W"]
+    D: NDArray[np.float64] = npz["D"]
+
+    return W, D
