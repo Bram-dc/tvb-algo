@@ -1,13 +1,12 @@
 import math
 import random
 from typing import Callable
-from tvb_algo import data, network, deint
-
-W, D = data.tvb76_weights_lengths()
-n = len(W)
+from tvb_algo import network, deint
 
 
 def simulate(
+    W: list[list[float]],
+    D: list[list[float]],
     dt: float = 0.05,
     tf: float = 150.0,
     k: float = 0.0,
