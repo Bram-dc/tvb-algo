@@ -1,16 +1,9 @@
 """Differential equation integration."""
 
-from typing import Callable
 import numpy as np
 
 
-def em_color(
-    f: Callable[[int, list[list[float]]], tuple[float, float]],
-    g: Callable[[int, list[list[float]]], float],
-    dt: float,
-    lam: float,
-    x: list[list[float]],
-):
+def em_color(f, g, dt, lam, x):
     """Euler-Maruyama for colored noise."""
     i = 0
     nd = x.shape

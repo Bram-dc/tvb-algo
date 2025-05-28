@@ -36,6 +36,4 @@ def tvb76_weights_lengths() -> tuple[list[list[float]], list[list[float]]]:
             )
     npz = np.load(cache_fname)
 
-    # Return as plain python arrays (not numpy arrays)
-
-    return npz["W"].tolist(), npz["D"].tolist()
+    return npz["W"], npz["D"]
