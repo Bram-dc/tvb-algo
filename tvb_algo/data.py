@@ -36,7 +36,7 @@ def tvb76_weights_lengths():
             )
     npz = np.load(cache_fname)
 
-    W = npz["W"].tolist()
-    D = npz["D"].tolist()
+    W: list[list[float]] = npz["W"].tolist()
+    D: list[list[float]] = npz["D"].tolist()
 
     return W, D

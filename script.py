@@ -3,7 +3,7 @@ import random
 from typing import Callable
 import numpy as np
 import matplotlib.pyplot as plt
-from tvb_algo import data, network, deint
+from tvb_algo import data, network, deint, plot
 import time
 from tqdm import tqdm
 
@@ -69,37 +69,18 @@ def simulate(
 
 
 dt = 0.05
-
-
-plt.figure(figsize=(12, 6))
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 6))
 elapsed = 0.0
-for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
+
+for i, speed in enumerate([1.0, 2.0, 10.0]):
     tic = time.time()
     T, Xs = simulate(dt, 150.0, k=1e-3, speed=speed)
     elapsed += time.time() - tic
 
-    D_np = np.array(D)
-    W_np = np.array(W)
-    T_np = np.array(T)
-    Xs_np = np.array(Xs)
+    plot.plot_traj(axes[0, i], T, Xs, speed)
+    plot.plot_delay(axes[1, i], D, W, T, speed)
 
-    delays = (D[W != 0] / speed).flatten()
-
-    plt.subplot(2, 3, i + 1)
-    plt.plot(T_np[::5], Xs_np[::5, :, 0], "k", alpha=0.3)
-    plt.grid(True, axis="x")
-    plt.xlim(0, T_np[-1])
-    plt.title(f"Speed = {speed} mm/ms")
-    plt.xlabel("time (ms)")
-    plt.ylabel("X(t)")
-
-    plt.subplot(2, 3, i + 4)
-    plt.hist(delays, bins=100)
-    plt.grid(True)
-    plt.xlabel("delay (ms)")
-    plt.ylabel("# delay")
-    plt.xlim(0, T_np[-1])
-
-plt.tight_layout()
+fig.tight_layout()
 print(f"{elapsed:.3f}s elapsed")
+
 plt.show()
