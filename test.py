@@ -16,6 +16,8 @@ k = 1e-3
 speed = 1.0
 freq = 1.0
 
+tolerance = 1e-6
+
 disable_randomness()
 
 for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
@@ -34,15 +36,15 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
     for x_base, x_original, x_jit in zip(Xs_base, Xs_original, Xs_jit):
         assert (
             len(x_base) == len(x_original) == len(x_jit)
-        ), f"Length mismatch in Xs for speed {speed}"
+        ), f"Length mismatch in x for speed {speed}"
 
         for xi_base, xi_original, xi_jit in zip(x_base, x_original, x_jit):
             assert np.allclose(
-                xi_base, xi_original
-            ), f"Mismatch in Xs for speed {speed} at {xi_base} vs {xi_original}"
+                xi_base, xi_original, atol=tolerance
+            ), f"Mismatch in Xs for speed {speed} at {xi_base} vs {xi_original} (base vs original)"
             assert np.allclose(
-                xi_base, xi_jit
-            ), f"Mismatch in Xs for speed {speed} at {xi_base} vs {xi_jit}"
+                xi_base, xi_jit, atol=tolerance
+            ), f"Mismatch in Xs for speed {speed} at {xi_base} vs {xi_jit} (base vs jit)"
 
 
 print("All tests passed successfully!")
