@@ -25,7 +25,7 @@ def wm_ring(
         adj.append(row)
 
     H = max_delay + 1
-    hist: list[list[list[float]]] = [[[0.0] * ncv for _ in range(n)] for _ in range(H)]
+    hist = [[[0.0] * ncv for _ in range(n)] for _ in range(H)]
 
     active_nodes = [r for r, outs in enumerate(adj) if outs]
 
