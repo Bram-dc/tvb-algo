@@ -1,7 +1,8 @@
+from typing import Any
 import numpy as np
 
 
-def plot_traj(ax, T: list[float], Xs: list[list[list[float]]], speed: float):
+def plot_traj(ax: Any, T: list[float], Xs: list[list[list[float]]], speed: float):
     T_np = np.array(T)
     Xs_np = np.array(Xs)
 
@@ -14,7 +15,7 @@ def plot_traj(ax, T: list[float], Xs: list[list[list[float]]], speed: float):
 
 
 def plot_delay(
-    ax, D: list[list[float]], W: list[list[float]], T: list[float], speed: float
+    ax: Any, D: list[list[float]], W: list[list[float]], T: list[float], speed: float
 ):
     D_np = np.array(D)
     W_np = np.array(W)
