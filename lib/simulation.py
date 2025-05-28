@@ -1,7 +1,6 @@
 import math
 import random
-from typing import Callable
-from tvb_algo import network, deint
+from . import network, deint
 
 
 def simulate(
@@ -15,10 +14,11 @@ def simulate(
 ) -> tuple[list[float], list[list[list[float]]]]:
     n = len(W)
 
-    pre: Callable[[list[float], list[float]], list[float]] = lambda xi, xj: [
-        xj[0] - 1.0
-    ]
-    post: Callable[[float], float] = lambda gx: k * gx
+    def pre(xi: list[float], xj: list[float]) -> list[float]:
+        return [xj[0] - 1.0]
+
+    def post(gx: float) -> float:
+        return k * gx
 
     D_speed = [[D[r][c] / speed for c in range(n)] for r in range(n)]
 

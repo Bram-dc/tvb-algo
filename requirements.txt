@@ -3,3 +3,4 @@ numba
 joblib
 matplotlib
 tqdm
+tvb-algo

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from tvb_algo import simulation, data, plot
+from lib import simulation, data, plot
 import time
 from tqdm import tqdm
 
