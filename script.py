@@ -82,14 +82,30 @@ def sim(
         W, D / speed, dt, pre, post, ncv=1
     )
 
-    def f(i: int, X: NDArray[np.float64]) -> NDArray[np.float64]:  # monostable
-        x, y = X.T
-        (c,) = prop(i, x.reshape((-1, 1))).T
-        dx = freq * (x - x**3 / 3 + y) * 3.0
-        dy = freq * (1.01 - x + c) / 3.0
-        return np.vstack((dx, dy)).T
+    def f(i: int, X: np.ndarray) -> np.ndarray:
+        X_list = X.tolist()
+        x_list = [pair[0] for pair in X_list]
+        y_list = [pair[1] for pair in X_list]
 
-    def g(i: int, X: NDArray[np.float64]) -> float:  # additive linear noise
+        x_input = [[x] for x in x_list]
+        c_arr = prop(i, np.array(x_input))
+        c_list = c_arr.flatten().tolist()
+
+        dx_list = []
+        dy_list = []
+        for x, y, c in zip(x_list, y_list, c_list):
+            dx = freq * (x - x**3 / 3 + y) * 3.0
+            dy = freq * (1.01 - x + c) / 3.0
+            dx_list.append(dx)
+            dy_list.append(dy)
+
+        out = np.empty((len(dx_list), 2), dtype=float)
+        for idx, (dx, dy) in enumerate(zip(dx_list, dy_list)):
+            out[idx, 0] = dx
+            out[idx, 1] = dy
+        return out
+
+    def g(i: int, X: NDArray[np.float64]) -> float:
         return math.sqrt(1e-9)
 
     X_init: NDArray[np.float64] = np.zeros((n, 2))
