@@ -19,12 +19,16 @@ freq = 1.0
 tolerance = 1e-6
 
 for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
-    T_base, Xs_base = base_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)
-    T_original, Xs_original = original_simulation.simulate(W, D, dt, tf, k, speed, freq)
-    T_base_single_ncv, Xs_base_single_ncv = base_single_ncv_simulation.simulate(
+    T_base, Xs_base, _ = base_simulation.simulate(
         W_list, D_list, dt, tf, k, speed, freq
     )
-    T_parallel, Xs_parallel = parallel_simulation.simulate(
+    T_original, Xs_original, _ = original_simulation.simulate(
+        W, D, dt, tf, k, speed, freq
+    )
+    T_base_single_ncv, Xs_base_single_ncv, _ = base_single_ncv_simulation.simulate(
+        W_list, D_list, dt, tf, k, speed, freq
+    )
+    T_parallel, Xs_parallel, _ = parallel_simulation.simulate(
         W_list, D_list, dt, tf, k, speed, freq
     )
 
