@@ -4,6 +4,7 @@ from typing import Generator
 import numba  # type: ignore
 
 max_workers = 8
+threading_enabled = True
 
 
 # Prepare adjacency and delay structures for the network
@@ -92,9 +93,15 @@ def f(
 
         return compute_derivatives(x, y, coupling, freq)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for r, future in enumerate(executor.submit(compute_node, r) for r in range(n)):
-            dx[r], dy[r] = future.result()
+    if threading_enabled:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for r, future in enumerate(
+                executor.submit(compute_node, r) for r in range(n)
+            ):
+                dx[r], dy[r] = future.result()
+    else:
+        for r in range(n):
+            dx[r], dy[r] = compute_node(r)
 
     return dx, dy
 
