@@ -71,7 +71,7 @@ def step(
     return out
 
 
-def compute_derivative(
+def compute_derivatives(
     x: float, y: float, c: float, freq: float
 ) -> tuple[float, float]:
     dx = freq * (x - x**3 / 3 + y) * 3.0
@@ -98,16 +98,16 @@ def f(
 
     inp = [[x] * ncv for x in x_vals]
     c_out = step(n, i, inp, H, hist, active_nodes, adj, k, ncv)
-    c_list = [c_out[r][0] for r in range(n)]
 
     dx = [0.0] * n
     dy = [0.0] * n
+
     for r in range(n):
         x = X[r][0]
         y = X[r][1]
-        c = c_list[r]
+        c = c_out[r][0]
 
-        dx[r], dy[r] = compute_derivative(x, y, c, freq)
+        dx[r], dy[r] = compute_derivatives(x, y, c, freq)
 
     return dx, dy
 
