@@ -1,8 +1,9 @@
 from lib import data
-from lib.random import disable_randomness
 from base import simulation as base_simulation
 from original import simulation as original_simulation
-from jit import simulation as jit_simulation
+from base import simulation as jit_simulation  # TODO
+
+# from jit import simulation as jit_simulation
 from tqdm import tqdm
 import numpy as np
 
@@ -17,8 +18,6 @@ speed = 1.0
 freq = 1.0
 
 tolerance = 1e-6
-
-disable_randomness()
 
 for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
     T_base, Xs_base = base_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)

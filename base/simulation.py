@@ -1,6 +1,5 @@
 import math
 import random
-from lib.random import randomness_enabled
 from . import network, deint
 
 
@@ -56,8 +55,8 @@ def simulate(
                 x[r][0] = x[r][1] = -1.0
         elif t == 1:
             for r in range(n):
-                r1 = random.random() if randomness_enabled() else 0.5
-                r2 = random.random() if randomness_enabled() else 0.5
+                r1 = random.random()
+                r2 = random.random()
 
                 x[r][0] = r1 / 5 + 1.0
                 x[r][1] = r2 / 5 - 0.6
