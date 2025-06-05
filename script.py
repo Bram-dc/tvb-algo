@@ -3,7 +3,8 @@ from lib import data, plot
 from parallel import simulation
 from tqdm import tqdm
 
-if __name__ == "__main__":
+
+def run_simulation():
     W, D = data.tvb76_weights_lengths()
     W_list = W.tolist()
     D_list = D.tolist()
@@ -30,3 +31,7 @@ if __name__ == "__main__":
 
     fig.tight_layout()
     plt.show()  # type: ignore
+
+
+if __name__ == "__main__":
+    run_simulation()
