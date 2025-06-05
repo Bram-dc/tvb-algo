@@ -1,4 +1,5 @@
 import math
+import time
 
 # import random
 from . import network, deint
@@ -12,7 +13,7 @@ def simulate(
     k: float,
     speed: float,
     freq: float,
-) -> tuple[list[float], list[list[list[float]]]]:
+) -> tuple[list[float], list[list[list[float]]], float]:
     n = len(W)
 
     def pre(xi: list[float], xj: list[float]) -> list[float]:
@@ -49,6 +50,7 @@ def simulate(
     Xs: list[list[list[float]]] = []
     gen = deint.em_color(f, g, dt, lam=1e-1, x0=X)
 
+    start = time.time()
     for t in range(steps):
         x, _ = next(gen)
         if t == 0:
@@ -64,6 +66,10 @@ def simulate(
                 x[r][0] = r1 / 5 + 1.0
                 x[r][1] = r2 / 5 - 0.6
         Xs.append([x[r].copy() for r in range(n)])
+    end = time.time()
 
     T = [t * dt for t in range(steps)]
-    return T, Xs
+
+    duration = end - start
+
+    return T, Xs, duration

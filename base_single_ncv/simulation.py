@@ -1,3 +1,4 @@
+import time
 from typing import Generator
 
 
@@ -140,7 +141,7 @@ def simulate(
     k: float,
     speed: float,
     freq: float,
-) -> tuple[list[float], list[list[list[float]]]]:
+) -> tuple[list[float], list[list[list[float]]], float]:
     n = len(W)
 
     D_speed = [[D[r][c] / speed for c in range(n)] for r in range(n)]
@@ -154,6 +155,7 @@ def simulate(
 
     Xs: list[list[list[float]]] = []
 
+    start = time.time()
     for t in range(steps):
         x = next(gen)
 
@@ -170,7 +172,10 @@ def simulate(
                 x[r][1] = r2 / 5 - 0.6
 
         Xs.append([x[r].copy() for r in range(n)])
+    end = time.time()
 
     T = [t * dt for t in range(steps)]
 
-    return T, Xs
+    duration = end - start
+
+    return T, Xs, duration

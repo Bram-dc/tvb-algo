@@ -1,4 +1,3 @@
-import time
 import matplotlib.pyplot as plt
 from lib import data
 from base import simulation as base_simulation
@@ -23,25 +22,27 @@ timings_base_single_ncv: list[float] = []
 timings_parallel: list[float] = []
 
 for dt in tqdm(dt_values):
-    start_time = time.time()
-    T_base, Xs_base = base_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)
-    timings_base.append(time.time() - start_time)
-
-    start_time = time.time()
-    T_original, Xs_original = original_simulation.simulate(W, D, dt, tf, k, speed, freq)
-    timings_original.append(time.time() - start_time)
-
-    start_time = time.time()
-    T_base_single_ncv, Xs_base_single_ncv = base_single_ncv_simulation.simulate(
+    T_base, Xs_base, duration_base = base_simulation.simulate(
         W_list, D_list, dt, tf, k, speed, freq
     )
-    timings_base_single_ncv.append(time.time() - start_time)
+    timings_base.append(duration_base)
 
-    start_time = time.time()
-    T_parallel, Xs_parallel = parallel_simulation.simulate(
-        W_list, D_list, dt, tf, k, speed, freq
+    T_original, Xs_original, duration_original = original_simulation.simulate(
+        W, D, dt, tf, k, speed, freq
     )
-    timings_parallel.append(time.time() - start_time)
+    timings_original.append(duration_original)
+
+    T_base_single_ncv, Xs_base_single_ncv, duration_base_single_ncv = (
+        base_single_ncv_simulation.simulate(
+            W_list, D_list, dt_values[0], tf, k, speed, freq
+        )
+    )
+    timings_base_single_ncv.append(duration_base_single_ncv)
+
+    T_parallel, Xs_parallel, duration_parallel = parallel_simulation.simulate(
+        W_list, D_list, dt_values[0], tf, k, speed, freq
+    )
+    timings_parallel.append(duration_parallel)
 
 
 plt.figure(figsize=(10, 6))  # type: ignore

@@ -1,3 +1,4 @@
+import time
 from typing import Any
 
 # from matplotlib.pylab import rand
@@ -33,6 +34,8 @@ def simulate(
     X = np.zeros((n, 2))
     Xs = np.zeros((int(tf / dt),) + X.shape)
     T = np.r_[: Xs.shape[0]]
+
+    start = time.time()
     for t, (x, _) in zip(T, deint.em_color(f, g, dt, 1e-1, X)):
         if t == 0:
             x[:] = -1.0
@@ -41,4 +44,8 @@ def simulate(
             r = np.array([[0.5, 0.5]] * n)
             x[:] = r / 5 + np.r_[1.0, -0.6]
         Xs[t] = x
-    return T, Xs
+    end = time.time()
+
+    duration = end - start
+
+    return T, Xs, duration
