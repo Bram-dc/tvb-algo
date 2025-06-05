@@ -2,8 +2,8 @@ from typing import Generator
 
 
 # Pre-synaptic function: computes input from neuron j to neuron i
-def pre(xi: list[float], xj: list[float]) -> list[float]:
-    return [xj[0] - 1.0]
+def pre(xi: float, xj: float) -> list[float]:
+    return [xj - 1.0]
 
 
 # Post-synaptic function: scales input by coupling constant k
@@ -16,9 +16,8 @@ def wm_ring_params(
     W: list[list[float]],
     D: list[list[float]],
     dt: float,
-    ncv: int,
     cut: float = 0.0,
-) -> tuple[int, list[list[list[float]]], list[int], list[list[tuple[int, float, int]]]]:
+) -> tuple[int, list[list[float]], list[int], list[list[tuple[int, float, int]]]]:
     n = len(W)
     adj: list[list[tuple[int, float, int]]] = []
     max_delay = 0
@@ -35,7 +34,7 @@ def wm_ring_params(
         adj.append(row)
 
     H = max_delay + 1  # History length needed for delays
-    hist = [[[0.0] * ncv for _ in range(n)] for _ in range(H)]
+    hist = [[0.0 for _ in range(n)] for _ in range(H)]
     active_nodes = [r for r, outs in enumerate(adj) if outs]
 
     return H, hist, active_nodes, adj
@@ -45,18 +44,17 @@ def wm_ring_params(
 def step(
     n: int,
     i: int,
-    xi: list[list[float]],
+    xi: list[float],
     H: int,
-    hist: list[list[list[float]]],
+    hist: list[list[float]],
     active_nodes: list[int],
     adj: list[list[tuple[int, float, int]]],
     k: float,
-    ncv: int,
 ) -> list[list[float]]:
 
     hist[i % H] = xi  # Store current state in history buffer
 
-    out = [[0.0] * ncv for _ in range(n)]
+    out = [[0.0] for _ in range(n)]
 
     for r in active_nodes:
         total = 0.0
@@ -88,16 +86,15 @@ def f(
     k: float,
     X: list[list[float]],
     H: int,
-    hist: list[list[list[float]]],
+    hist: list[list[float]],
     active_nodes: list[int],
     adj: list[list[tuple[int, float, int]]],
-    ncv: int,
 ) -> tuple[list[float], list[float]]:
 
     x_vals = [X[r][0] for r in range(n)]
 
-    inp = [[x] * ncv for x in x_vals]
-    c_out = step(n, i, inp, H, hist, active_nodes, adj, k, ncv)
+    inp = [x for x in x_vals]
+    c_out = step(n, i, inp, H, hist, active_nodes, adj, k)
 
     dx = [0.0] * n
     dy = [0.0] * n
@@ -117,12 +114,11 @@ def em_color(
     freq: float,
     k: float,
     H: int,
-    hist: list[list[list[float]]],
+    hist: list[list[float]],
     active_nodes: list[int],
     adj: list[list[tuple[int, float, int]]],
     dt: float,
     x0: list[list[float]],
-    ncv: int,
 ) -> Generator[list[list[float]], None, None]:
     n = len(x0)
 
@@ -130,7 +126,7 @@ def em_color(
     while True:
         yield x0
         i += 1
-        dx, dy = f(n, i, freq, k, x0, H, hist, active_nodes, adj, ncv)
+        dx, dy = f(n, i, freq, k, x0, H, hist, active_nodes, adj)
 
         for r in range(n):
             x0[r][0] += dt * dx[r]
@@ -151,14 +147,12 @@ def simulate(
 
     D_speed = [[D[r][c] / speed for c in range(n)] for r in range(n)]
 
-    H, hist, active_nodes, adj = wm_ring_params(W, D_speed, dt, ncv=1, cut=0.0)
+    H, hist, active_nodes, adj = wm_ring_params(W, D_speed, dt, cut=0.0)
 
     steps = int(tf / dt)
     x0 = [[0.0, 0.0] for _ in range(n)]
 
-    ncv = 1  # Number of control variables
-
-    gen = em_color(freq, k, H, hist, active_nodes, adj, dt, x0, ncv)
+    gen = em_color(freq, k, H, hist, active_nodes, adj, dt, x0)
 
     Xs: list[list[list[float]]] = []
 

@@ -1,9 +1,7 @@
 from lib import data
 from base import simulation as base_simulation
 from original import simulation as original_simulation
-from jit import simulation as jit_simulation
-
-# from jit import simulation as jit_simulation
+from base_single_ncv import simulation as base_single_ncv_simulation
 from tqdm import tqdm
 import numpy as np
 
@@ -22,28 +20,34 @@ tolerance = 1e-6
 for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
     T_base, Xs_base = base_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)
     T_original, Xs_original = original_simulation.simulate(W, D, dt, tf, k, speed, freq)
-    T_jit, Xs_jit = jit_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)
+    T_base_single_ncv, Xs_base_single_ncv = base_single_ncv_simulation.simulate(
+        W_list, D_list, dt, tf, k, speed, freq
+    )
 
     # Compare results
     assert (
-        len(T_base) == len(T_original) == len(T_jit)
+        len(T_base) == len(T_original) == len(T_base_single_ncv)
     ), f"Length mismatch in T for speed {speed}"
     assert (
-        len(Xs_base) == len(Xs_original) == len(Xs_jit)
+        len(Xs_base) == len(Xs_original) == len(Xs_base_single_ncv)
     ), f"Length mismatch in Xs for speed {speed}"
 
-    for x_base, x_original, x_jit in zip(Xs_base, Xs_original, Xs_jit):
+    for x_base, x_original, x_base_single_ncv in zip(
+        Xs_base, Xs_original, Xs_base_single_ncv
+    ):
         assert (
-            len(x_base) == len(x_original) == len(x_jit)
+            len(x_base) == len(x_original) == len(x_base_single_ncv)
         ), f"Length mismatch in x for speed {speed}"
 
-        for xi_base, xi_original, xi_jit in zip(x_base, x_original, x_jit):
+        for xi_base, xi_original, xi_base_single_ncv in zip(
+            x_base, x_original, x_base_single_ncv
+        ):
             assert np.allclose(
                 xi_base, xi_original, atol=tolerance
             ), f"Mismatch in Xs for speed {speed} at {xi_base} vs {xi_original} (base vs original)"
             assert np.allclose(
-                xi_base, xi_jit, atol=tolerance
-            ), f"Mismatch in Xs for speed {speed} at {xi_base} vs {xi_jit} (base vs jit)"
+                xi_base, xi_base_single_ncv, atol=tolerance
+            ), f"Mismatch in Xs for speed {speed} at {xi_base} vs {xi_base_single_ncv} (base vs base_single_ncv)"
 
 
 print("All tests passed successfully!")
