@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from lib import data, plot
-from jit import simulation
+from base import simulation
 import time
 from tqdm import tqdm
 
