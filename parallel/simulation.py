@@ -1,15 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor
 import time
 from typing import Generator
+import numba  # type: ignore
 
-
-# Pre-synaptic function: computes input from neuron j to neuron i
-def pre(xi: float, xj: float) -> float:
-    return xj - 1.0
-
-
-# Post-synaptic function: scales input by coupling constant k
-def post(gx: float, k: float) -> float:
-    return k * gx
+max_workers = 8
 
 
 # Prepare adjacency and delay structures for the network
@@ -44,6 +38,19 @@ def wm_ring_params(
     return H, hist, is_node_active, adj
 
 
+# Pre-synaptic function: computes input from neuron j to neuron i
+@numba.njit  # type: ignore
+def pre(xi: float, xj: float) -> float:
+    return xj - 1.0
+
+
+# Post-synaptic function: scales input by coupling constant k
+@numba.njit  # type: ignore
+def post(gx: float, k: float) -> float:
+    return k * gx
+
+
+@numba.njit  # type: ignore
 def compute_derivatives(
     x: float, y: float, coupling: float, freq: float
 ) -> tuple[float, float]:
@@ -71,7 +78,7 @@ def f(
     dx = [0.0] * n
     dy = [0.0] * n
 
-    for r in range(n):
+    def compute_node(r: int):
         x = X[r][0]
         y = X[r][1]
 
@@ -83,7 +90,11 @@ def f(
 
         coupling = post(total, k)
 
-        dx[r], dy[r] = compute_derivatives(x, y, coupling, freq)
+        return compute_derivatives(x, y, coupling, freq)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for r, future in enumerate(executor.submit(compute_node, r) for r in range(n)):
+            dx[r], dy[r] = future.result()
 
     return dx, dy
 
@@ -134,6 +145,11 @@ def simulate(
     gen = em_color(freq, k, H, hist, is_node_active, adj, dt, x0)
 
     Xs: list[list[list[float]]] = []
+
+    # Compile the jit functions
+    pre(1.0, 1.0)
+    post(1.0, 1.0)
+    compute_derivatives(1.0, 1.0, 1.0, 1.0)
 
     start = time.time()
     for t in range(steps):
