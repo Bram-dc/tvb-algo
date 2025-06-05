@@ -3,8 +3,8 @@ from typing import Generator
 
 
 # Pre-synaptic function: computes input from neuron j to neuron i
-def pre(xi: float, xj: float) -> list[float]:
-    return [xj - 1.0]
+def pre(xi: float, xj: float) -> float:
+    return xj - 1.0
 
 
 # Post-synaptic function: scales input by coupling constant k
@@ -18,7 +18,7 @@ def wm_ring_params(
     D: list[list[float]],
     dt: float,
     cut: float = 0.0,
-) -> tuple[int, list[list[float]], list[int], list[list[tuple[int, float, int]]]]:
+) -> tuple[int, list[list[float]], list[bool], list[list[tuple[int, float, int]]]]:
     n = len(W)
     adj: list[list[tuple[int, float, int]]] = []
     max_delay = 0
@@ -36,45 +36,19 @@ def wm_ring_params(
 
     H = max_delay + 1  # History length needed for delays
     hist = [[0.0 for _ in range(n)] for _ in range(H)]
+
     active_nodes = [r for r, outs in enumerate(adj) if outs]
 
-    return H, hist, active_nodes, adj
+    is_node_active = [True if r in active_nodes else False for r in range(n)]
 
-
-# Single integration step for the network
-def step(
-    n: int,
-    i: int,
-    xi: list[float],
-    H: int,
-    hist: list[list[float]],
-    active_nodes: list[int],
-    adj: list[list[tuple[int, float, int]]],
-    k: float,
-) -> list[list[float]]:
-
-    hist[i % H] = xi  # Store current state in history buffer
-
-    out = [[0.0] for _ in range(n)]
-
-    for r in active_nodes:
-        total = 0.0
-
-        for c, w_rc, delay in adj[r]:
-            xj = hist[(i - delay) % H][c]
-            pre_val = pre(xi[r], xj)
-            total += w_rc * pre_val[0]
-
-        out[r][0] = post(total, k)
-
-    return out
+    return H, hist, is_node_active, adj
 
 
 def compute_derivatives(
-    x: float, y: float, c: float, freq: float
+    x: float, y: float, coupling: float, freq: float
 ) -> tuple[float, float]:
     dx = freq * (x - x**3 / 3 + y) * 3.0
-    dy = freq * (1.01 - x + c) / 3.0
+    dy = freq * (1.01 - x + coupling) / 3.0
 
     return dx, dy
 
@@ -88,12 +62,11 @@ def f(
     X: list[list[float]],
     H: int,
     hist: list[list[float]],
-    active_nodes: list[int],
+    is_node_active: list[bool],
     adj: list[list[tuple[int, float, int]]],
 ) -> tuple[list[float], list[float]]:
 
-    xi = [X[r][0] for r in range(n)]
-    c_out = step(n, i, xi, H, hist, active_nodes, adj, k)
+    hist[i % H] = [X[r][0] for r in range(n)]  # Store current state in history buffer
 
     dx = [0.0] * n
     dy = [0.0] * n
@@ -101,9 +74,16 @@ def f(
     for r in range(n):
         x = X[r][0]
         y = X[r][1]
-        c = c_out[r][0]
 
-        dx[r], dy[r] = compute_derivatives(x, y, c, freq)
+        total = 0.0
+        if is_node_active[r]:
+            for c, w_rc, delay in adj[r]:
+                xj = hist[(i - delay) % H][c]
+                total += w_rc * pre(X[r][0], xj)
+
+        coupling = post(total, k)
+
+        dx[r], dy[r] = compute_derivatives(x, y, coupling, freq)
 
     return dx, dy
 
@@ -114,7 +94,7 @@ def em_color(
     k: float,
     H: int,
     hist: list[list[float]],
-    active_nodes: list[int],
+    is_node_active: list[bool],
     adj: list[list[tuple[int, float, int]]],
     dt: float,
     x0: list[list[float]],
@@ -125,7 +105,7 @@ def em_color(
     while True:
         yield x0
         i += 1
-        dx, dy = f(n, i, freq, k, x0, H, hist, active_nodes, adj)
+        dx, dy = f(n, i, freq, k, x0, H, hist, is_node_active, adj)
 
         for r in range(n):
             x0[r][0] += dt * dx[r]
@@ -146,12 +126,12 @@ def simulate(
 
     D_speed = [[D[r][c] / speed for c in range(n)] for r in range(n)]
 
-    H, hist, active_nodes, adj = wm_ring_params(W, D_speed, dt, cut=0.0)
+    H, hist, is_node_active, adj = wm_ring_params(W, D_speed, dt, cut=0.0)
 
     steps = int(tf / dt)
     x0 = [[0.0, 0.0] for _ in range(n)]
 
-    gen = em_color(freq, k, H, hist, active_nodes, adj, dt, x0)
+    gen = em_color(freq, k, H, hist, is_node_active, adj, dt, x0)
 
     Xs: list[list[list[float]]] = []
 
