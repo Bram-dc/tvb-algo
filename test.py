@@ -1,7 +1,7 @@
 from lib import data
 from base import simulation as base_simulation
 from original import simulation as original_simulation
-from base import simulation as jit_simulation  # TODO
+from jit import simulation as jit_simulation
 
 # from jit import simulation as jit_simulation
 from tqdm import tqdm
