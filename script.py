@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from lib import data, plot
-from base_single_ncv import simulation
+from parallel import simulation
 import time
 from tqdm import tqdm
 

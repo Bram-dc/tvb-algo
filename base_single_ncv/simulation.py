@@ -91,10 +91,8 @@ def f(
     adj: list[list[tuple[int, float, int]]],
 ) -> tuple[list[float], list[float]]:
 
-    x_vals = [X[r][0] for r in range(n)]
-
-    inp = [x for x in x_vals]
-    c_out = step(n, i, inp, H, hist, active_nodes, adj, k)
+    xi = [X[r][0] for r in range(n)]
+    c_out = step(n, i, xi, H, hist, active_nodes, adj, k)
 
     dx = [0.0] * n
     dy = [0.0] * n
