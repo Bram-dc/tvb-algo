@@ -16,7 +16,7 @@ def wm_ring_params(
     W: list[list[float]],
     D: list[list[float]],
     dt: float,
-    ncv: int = 1,
+    ncv: int,
     cut: float = 0.0,
 ) -> tuple[int, list[list[list[float]]], list[int], list[list[tuple[int, float, int]]]]:
     n = len(W)
@@ -51,7 +51,7 @@ def step(
     active_nodes: list[int],
     adj: list[list[tuple[int, float, int]]],
     k: float,
-    ncv: int = 1,
+    ncv: int,
 ) -> list[list[float]]:
 
     hist[i % H] = xi  # Store current state in history buffer
@@ -63,8 +63,7 @@ def step(
 
         for c, w_rc, delay in adj[r]:
             xj = hist[(i - delay) % H][c]
-            xi_r = xi[r]
-            pre_val = pre(xi_r, xj)
+            pre_val = pre(xi[r], xj)
             total += w_rc * pre_val[0]
 
         out[r][0] = post(total, k)
@@ -92,19 +91,21 @@ def f(
     hist: list[list[list[float]]],
     active_nodes: list[int],
     adj: list[list[tuple[int, float, int]]],
+    ncv: int,
 ) -> tuple[list[float], list[float]]:
 
     x_vals = [X[r][0] for r in range(n)]
-    y_vals = [X[r][1] for r in range(n)]
 
-    inp = [[x] for x in x_vals]
-    c_out = step(n, i, inp, H, hist, active_nodes, adj, k, ncv=1)
+    inp = [[x] * ncv for x in x_vals]
+    c_out = step(n, i, inp, H, hist, active_nodes, adj, k, ncv)
     c_list = [c_out[r][0] for r in range(n)]
 
     dx = [0.0] * n
     dy = [0.0] * n
     for r in range(n):
-        x, y, c = x_vals[r], y_vals[r], c_list[r]
+        x = X[r][0]
+        y = X[r][1]
+        c = c_list[r]
 
         dx[r], dy[r] = compute_derivative(x, y, c, freq)
 
@@ -121,6 +122,7 @@ def em_color(
     adj: list[list[tuple[int, float, int]]],
     dt: float,
     x0: list[list[float]],
+    ncv: int,
 ) -> Generator[list[list[float]], None, None]:
     n = len(x0)
 
@@ -128,7 +130,7 @@ def em_color(
     while True:
         yield x0
         i += 1
-        dx, dy = f(n, i, freq, k, x0, H, hist, active_nodes, adj)
+        dx, dy = f(n, i, freq, k, x0, H, hist, active_nodes, adj, ncv)
 
         for r in range(n):
             x0[r][0] += dt * dx[r]
@@ -154,7 +156,9 @@ def simulate(
     steps = int(tf / dt)
     x0 = [[0.0, 0.0] for _ in range(n)]
 
-    gen = em_color(freq, k, H, hist, active_nodes, adj, dt, x0)
+    ncv = 1  # Number of control variables
+
+    gen = em_color(freq, k, H, hist, active_nodes, adj, dt, x0, ncv)
 
     Xs: list[list[list[float]]] = []
 
