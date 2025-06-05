@@ -1,9 +1,7 @@
 from typing import Generator
 from jit import network
-import numba
 
 
-@numba.jit(nopython=True)
 def f(
     n: int,
     i: int,
@@ -14,7 +12,7 @@ def f(
     hist: list[list[list[float]]],
     active_nodes: list[int],
     adj: list[list[tuple[int, float, int]]],
-) -> list[list[float]]:
+) -> tuple[list[float], list[float]]:
     x_vals = [X[r][0] for r in range(n)]
     y_vals = [X[r][1] for r in range(n)]
     inp = [[x] for x in x_vals]
@@ -28,10 +26,9 @@ def f(
         dx[r] = freq * (x - x**3 / 3 + y) * 3.0
         dy[r] = freq * (1.01 - x + c) / 3.0
 
-    return [[dx[r], dy[r]] for r in range(n)]
+    return dx, dy
 
 
-@numba.jit(nopython=True)
 def em_color(
     freq: float,
     k: float,
@@ -43,13 +40,13 @@ def em_color(
     x0: list[list[float]],
 ) -> Generator[list[list[float]], None, None]:
     n = len(x0)
-    dim = len(x0[0])
 
     i = 0
     while True:
         yield x0
         i += 1
-        f_val = f(n, i, freq, k, x0, H, hist, active_nodes, adj)
+        f_val_x, f_val_y = f(n, i, freq, k, x0, H, hist, active_nodes, adj)
+
         for r in range(n):
-            for d in range(dim):
-                x0[r][d] += dt * f_val[r][d]
+            x0[r][0] += dt * f_val_x[r]
+            x0[r][1] += dt * f_val_y[r]

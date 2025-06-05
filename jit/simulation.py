@@ -1,8 +1,6 @@
 from . import network, deint
-import numba
 
 
-@numba.jit(nopython=True)
 def simulate(
     W: list[list[float]],
     D: list[list[float]],
@@ -19,9 +17,10 @@ def simulate(
     H, hist, active_nodes, adj = network.wm_ring_params(W, D_speed, dt, ncv=1, cut=0.0)
 
     steps = int(tf / dt)
-    X = [[0.0, 0.0] for _ in range(n)]
+    x0 = [[0.0, 0.0] for _ in range(n)]
+    gen = deint.em_color(freq, k, H, hist, active_nodes, adj, dt, x0)
+
     Xs: list[list[list[float]]] = []
-    gen = deint.em_color(freq, k, H, hist, active_nodes, adj, dt, x0=X)
 
     for t in range(steps):
         x = next(gen)

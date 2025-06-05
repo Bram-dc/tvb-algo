@@ -1,17 +1,11 @@
-import numba
-
-
-@numba.jit(nopython=True)
 def pre(xi: list[float], xj: list[float]) -> list[float]:
     return [xj[0] - 1.0]
 
 
-@numba.jit(nopython=True)
 def post(gx: float, k: float) -> float:
     return k * gx
 
 
-@numba.jit(nopython=True)
 def wm_ring_params(
     W: list[list[float]],
     D: list[list[float]],
@@ -41,7 +35,6 @@ def wm_ring_params(
     return H, hist, active_nodes, adj
 
 
-@numba.jit(nopython=True)
 def step(
     n: int,
     i: int,
@@ -67,4 +60,5 @@ def step(
     out = [[0.0] * ncv for _ in range(n)]
     for r in active_nodes:
         out[r][0] = gx[r]
+
     return out
