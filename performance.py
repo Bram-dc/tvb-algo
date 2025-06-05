@@ -33,14 +33,12 @@ for dt in tqdm(dt_values):
     timings_original.append(duration_original)
 
     T_base_single_ncv, Xs_base_single_ncv, duration_base_single_ncv = (
-        base_single_ncv_simulation.simulate(
-            W_list, D_list, dt_values[0], tf, k, speed, freq
-        )
+        base_single_ncv_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)
     )
     timings_base_single_ncv.append(duration_base_single_ncv)
 
     T_parallel, Xs_parallel, duration_parallel = parallel_simulation.simulate(
-        W_list, D_list, dt_values[0], tf, k, speed, freq
+        W_list, D_list, dt, tf, k, speed, freq
     )
     timings_parallel.append(duration_parallel)
 
