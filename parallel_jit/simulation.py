@@ -12,30 +12,49 @@ def wm_ring_params(
     D: list[list[float]],
     dt: float,
     cut: float = 0.0,
-) -> tuple[int, list[list[float]], list[bool], list[list[tuple[int, float, int]]]]:
+) -> tuple[
+    int,
+    list[list[float]],
+    list[bool],
+    list[list[int]],
+    list[list[float]],
+    list[list[int]],
+]:
     n = len(W)
-    adj: list[list[tuple[int, float, int]]] = []
+
+    adj_c: list[list[int]] = []
+    adj_w: list[list[float]] = []
+    adj_delay: list[list[int]] = []
     max_delay = 0
     for r in range(n):
-        row: list[tuple[int, float, int]] = []
+        adj_c_row: list[int] = []
+        adj_w_row: list[float] = []
+        adj_delay_row: list[int] = []
+
         for c in range(n):
             w = W[r][c]
             if w > cut:
                 delay = int(D[r][c] / dt)
-                row.append((c, w, delay))
+
+                adj_c_row.append(c)
+                adj_w_row.append(w)
+                adj_delay_row.append(delay)
+
                 if delay > max_delay:
                     max_delay = delay
 
-        adj.append(row)
+        adj_c.append(adj_c_row)
+        adj_w.append(adj_w_row)
+        adj_delay.append(adj_delay_row)
 
     H = max_delay + 1  # History length needed for delays
     hist = [[0.0 for _ in range(n)] for _ in range(H)]
 
-    active_nodes = [r for r, outs in enumerate(adj) if outs]
+    active_nodes = [r for r, c in enumerate(adj_c) if c]
 
     is_node_active = [True if r in active_nodes else False for r in range(n)]
 
-    return H, hist, is_node_active, adj
+    return H, hist, is_node_active, adj_c, adj_w, adj_delay
 
 
 # Pre-synaptic function: computes input from neuron j to neuron i
@@ -60,6 +79,34 @@ def compute_derivatives(
     return dx, dy
 
 
+def compute_node(
+    i: int,
+    freq: float,
+    k: float,
+    H: int,
+    x: float,
+    y: float,
+    hist: list[list[float]],
+    is_active: bool,
+    adj_c_r: list[int],
+    adj_w_r: list[float],
+    adj_delay_r: list[int],
+) -> tuple[float, float]:
+    total = 0.0
+    if is_active:
+        for s in range(len(adj_c_r)):
+            c = adj_c_r[s]
+            w = adj_w_r[s]
+            delay = adj_delay_r[s]
+
+            xj = hist[(i - delay) % H][c]
+            total += w * pre(x, xj)
+
+    coupling = post(total, k)
+
+    return compute_derivatives(x, y, coupling, freq)
+
+
 # Computes derivatives for the network
 def f(
     n: int,
@@ -71,7 +118,9 @@ def f(
     H: int,
     hist: list[list[float]],
     is_node_active: list[bool],
-    adj: list[list[tuple[int, float, int]]],
+    adj_c: list[list[int]],
+    adj_w: list[list[float]],
+    adj_delay: list[list[int]],
 ) -> tuple[list[float], list[float]]:
 
     hist[i % H] = X.copy()  # TODO
@@ -79,22 +128,20 @@ def f(
     dx = [0.0] * n
     dy = [0.0] * n
 
-    def compute_node(r: int):
-        x = X[r]
-        y = Y[r]
-
-        total = 0.0
-        if is_node_active[r]:
-            for c, w_rc, delay in adj[r]:
-                xj = hist[(i - delay) % H][c]
-                total += w_rc * pre(X[r], xj)
-
-        coupling = post(total, k)
-
-        return compute_derivatives(x, y, coupling, freq)
-
     for r in range(n):
-        dx[r], dy[r] = compute_node(r)
+        dx[r], dy[r] = compute_node(
+            i,
+            freq,
+            k,
+            H,
+            X[r],
+            Y[r],
+            hist,
+            is_node_active[r],
+            adj_c[r],
+            adj_w[r],
+            adj_delay[r],
+        )
 
     return dx, dy
 
@@ -109,7 +156,9 @@ def em_color(
     H: int,
     hist: list[list[float]],
     is_node_active: list[bool],
-    adj: list[list[tuple[int, float, int]]],
+    adj_c: list[list[int]],
+    adj_w: list[list[float]],
+    adj_delay: list[list[int]],
 ) -> Generator[tuple[list[float], list[float]], None, None]:
     n = len(x0)
 
@@ -117,7 +166,9 @@ def em_color(
     while True:
         yield x0, y0
         i += 1
-        dx, dy = f(n, i, freq, k, x0, y0, H, hist, is_node_active, adj)
+        dx, dy = f(
+            n, i, freq, k, x0, y0, H, hist, is_node_active, adj_c, adj_w, adj_delay
+        )
 
         for r in range(n):
             x0[r] += dt * dx[r]
@@ -138,13 +189,17 @@ def simulate(
 
     D_speed = [[D[r][c] / speed for c in range(n)] for r in range(n)]
 
-    H, hist, is_node_active, adj = wm_ring_params(W, D_speed, dt, cut=0.0)
+    H, hist, is_node_active, adj_c, adj_w, adj_delay = wm_ring_params(
+        W, D_speed, dt, cut=0.0
+    )
 
     steps = int(tf / dt)
     x0 = [0.0 for _ in range(n)]
     y0 = [0.0 for _ in range(n)]
 
-    gen = em_color(freq, k, dt, x0, y0, H, hist, is_node_active, adj)
+    gen = em_color(
+        freq, k, dt, x0, y0, H, hist, is_node_active, adj_c, adj_w, adj_delay
+    )
 
     Xs: list[list[list[float]]] = []
 
