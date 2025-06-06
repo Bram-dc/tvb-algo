@@ -181,8 +181,6 @@ def simulate(
             n, i, freq, k, dt, x0, y0, H, hist, is_node_active, adj_c, adj_w, adj_delay
         )
 
-        hist[(i + 1) % H] = [x0[r] for r in range(n)]
-
         # Set initial conditions for first two steps
         if i == 0:
             for r in range(n):
@@ -195,6 +193,9 @@ def simulate(
 
                 x[r] = r1 / 5 + 1.0
                 y[r] = r2 / 5 - 0.6
+
+        # +1 weird implementation detail
+        hist[(i + 1) % H] = [x0[r] for r in range(n)]
 
         Xs.append([[x[r], y[r]] for r in range(n)])
     end = time.time()
