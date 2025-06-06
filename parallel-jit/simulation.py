@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import time
 from typing import Generator
+import numba  # type: ignore
 
 max_workers = 8
 threading_enabled = True
@@ -39,15 +40,18 @@ def wm_ring_params(
 
 
 # Pre-synaptic function: computes input from neuron j to neuron i
+@numba.njit  # type: ignore
 def pre(xi: float, xj: float) -> float:
     return xj - 1.0
 
 
 # Post-synaptic function: scales input by coupling constant k
+@numba.njit  # type: ignore
 def post(gx: float, k: float) -> float:
     return k * gx
 
 
+@numba.njit  # type: ignore
 def compute_derivatives(
     x: float, y: float, coupling: float, freq: float
 ) -> tuple[float, float]:
