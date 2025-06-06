@@ -55,7 +55,7 @@ plt.plot(dt_values, timings_base, label="Base Simulation", marker="o")  # type: 
 plt.plot(dt_values, timings_original, label="Original Simulation", marker="o")  # type: ignore
 plt.plot(dt_values, timings_base_single_ncv, label="Base NCV=1 Simulation", marker="o")  # type: ignore
 plt.plot(dt_values, timings_parallel, label="Parallel Simulation", marker="o")  # type: ignore
-plt.plot(dt_values, timings_jit, label="Parallel JIT Simulation", marker="o")  # type: ignore
+plt.plot(dt_values, timings_jit, label="JIT Simulation", marker="o")  # type: ignore
 plt.xlabel("Time Step (dt)")  # type: ignore
 plt.ylabel("Time (seconds)")  # type: ignore
 plt.title("Simulation Timing Comparison")  # type: ignore
