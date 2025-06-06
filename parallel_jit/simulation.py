@@ -123,7 +123,7 @@ def f(
     adj_delay: list[list[int]],
 ) -> tuple[list[float], list[float]]:
 
-    hist[i % H] = X.copy()  # TODO
+    hist[i % H] = [X[r] for r in range(n)]
 
     dx = [0.0] * n
     dy = [0.0] * n
