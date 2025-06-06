@@ -92,14 +92,15 @@ def compute_node(
 
 
 # Generator for Euler-Maruyama integration of the network
+@numba.njit  # type: ignore
 def step(
     n: int,
     i: int,
     freq: float,
     k: float,
     dt: float,
-    x0: np.ndarray,  # np array for initial conditions
-    y0: np.ndarray,  # np array for initial conditions
+    x0: np.ndarray,
+    y0: np.ndarray,
     H: int,
     hist: np.ndarray,  # History as a numpy array
     is_node_active: np.ndarray,  # bool array
@@ -142,8 +143,8 @@ def simulate(
 ) -> tuple[list[float], list[list[list[float]]], float]:
     n = len(W)
 
-    W = np.array(W, dtype=float)  # Convert to numpy array
-    D = np.array(D, dtype=float)  # Convert to numpy array
+    W = np.array(W, dtype=float)
+    D = np.array(D, dtype=float)
 
     D_speed = D / speed  # Element-wise division of numpy arrays
 
@@ -164,6 +165,33 @@ def simulate(
     pre(1.0, 1.0)
     post(1.0, 1.0)
     compute_derivatives(1.0, 1.0, 1.0, 1.0)
+    compute_node(
+        n,
+        0,
+        freq,
+        k,
+        H,
+        x0[0],
+        y0[0],
+        hist,
+        is_node_active[0],
+        adj_w[0],
+        adj_delay[0],
+    )
+    step(
+        n,
+        0,
+        freq,
+        k,
+        dt,
+        x0,
+        y0,
+        H,
+        hist,
+        is_node_active,
+        adj_w,
+        adj_delay,
+    )
 
     start = time.time()
     for i in range(steps):
