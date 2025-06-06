@@ -79,6 +79,7 @@ def compute_derivatives(
     return dx, dy
 
 
+@numba.njit  # type: ignore
 def compute_node(
     i: int,
     freq: float,
