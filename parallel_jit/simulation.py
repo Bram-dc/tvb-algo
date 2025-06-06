@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 import time
 from typing import Generator
 import numba  # type: ignore
@@ -67,41 +66,35 @@ def f(
     i: int,
     freq: float,
     k: float,
-    X: list[list[float]],
+    X: list[float],
+    Y: list[float],
     H: int,
     hist: list[list[float]],
     is_node_active: list[bool],
     adj: list[list[tuple[int, float, int]]],
 ) -> tuple[list[float], list[float]]:
 
-    hist[i % H] = [X[r][0] for r in range(n)]  # Store current state in history buffer
+    hist[i % H] = X.copy()  # TODO
 
     dx = [0.0] * n
     dy = [0.0] * n
 
     def compute_node(r: int):
-        x = X[r][0]
-        y = X[r][1]
+        x = X[r]
+        y = Y[r]
 
         total = 0.0
         if is_node_active[r]:
             for c, w_rc, delay in adj[r]:
                 xj = hist[(i - delay) % H][c]
-                total += w_rc * pre(X[r][0], xj)
+                total += w_rc * pre(X[r], xj)
 
         coupling = post(total, k)
 
         return compute_derivatives(x, y, coupling, freq)
 
-    if threading_enabled:
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for r, future in enumerate(
-                executor.submit(compute_node, r) for r in range(n)
-            ):
-                dx[r], dy[r] = future.result()
-    else:
-        for r in range(n):
-            dx[r], dy[r] = compute_node(r)
+    for r in range(n):
+        dx[r], dy[r] = compute_node(r)
 
     return dx, dy
 
@@ -110,24 +103,25 @@ def f(
 def em_color(
     freq: float,
     k: float,
+    dt: float,
+    x0: list[float],
+    y0: list[float],
     H: int,
     hist: list[list[float]],
     is_node_active: list[bool],
     adj: list[list[tuple[int, float, int]]],
-    dt: float,
-    x0: list[list[float]],
-) -> Generator[list[list[float]], None, None]:
+) -> Generator[tuple[list[float], list[float]], None, None]:
     n = len(x0)
 
     i = 0
     while True:
-        yield x0
+        yield x0, y0
         i += 1
-        dx, dy = f(n, i, freq, k, x0, H, hist, is_node_active, adj)
+        dx, dy = f(n, i, freq, k, x0, y0, H, hist, is_node_active, adj)
 
         for r in range(n):
-            x0[r][0] += dt * dx[r]
-            x0[r][1] += dt * dy[r]
+            x0[r] += dt * dx[r]
+            y0[r] += dt * dy[r]
 
 
 # Main simulation function
@@ -147,9 +141,10 @@ def simulate(
     H, hist, is_node_active, adj = wm_ring_params(W, D_speed, dt, cut=0.0)
 
     steps = int(tf / dt)
-    x0 = [[0.0, 0.0] for _ in range(n)]
+    x0 = [0.0 for _ in range(n)]
+    y0 = [0.0 for _ in range(n)]
 
-    gen = em_color(freq, k, H, hist, is_node_active, adj, dt, x0)
+    gen = em_color(freq, k, dt, x0, y0, H, hist, is_node_active, adj)
 
     Xs: list[list[list[float]]] = []
 
@@ -160,21 +155,22 @@ def simulate(
 
     start = time.time()
     for t in range(steps):
-        x = next(gen)
+        x, y = next(gen)
 
         # Set initial conditions for first two steps
         if t == 0:
             for r in range(n):
-                x[r][0] = x[r][1] = -1.0
+                x[r] = -1.0
+                y[r] = -1.0
         elif t == 1:
             for r in range(n):
                 r1 = 0.5
                 r2 = 0.5
 
-                x[r][0] = r1 / 5 + 1.0
-                x[r][1] = r2 / 5 - 0.6
+                x[r] = r1 / 5 + 1.0
+                y[r] = r2 / 5 - 0.6
 
-        Xs.append([x[r].copy() for r in range(n)])
+        Xs.append([[x[r], y[r]] for r in range(n)])
     end = time.time()
 
     T = [t * dt for t in range(steps)]
