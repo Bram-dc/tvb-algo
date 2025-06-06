@@ -1,5 +1,4 @@
 import time
-from typing import Generator
 import numba  # type: ignore
 
 max_workers = 8
@@ -79,7 +78,6 @@ def compute_derivatives(
     return dx, dy
 
 
-@numba.njit  # type: ignore
 def compute_node(
     i: int,
     freq: float,
@@ -108,47 +106,10 @@ def compute_node(
     return compute_derivatives(x, y, coupling, freq)
 
 
-# Computes derivatives for the network
-def f(
+# Generator for Euler-Maruyama integration of the network
+def step(
     n: int,
     i: int,
-    freq: float,
-    k: float,
-    X: list[float],
-    Y: list[float],
-    H: int,
-    hist: list[list[float]],
-    is_node_active: list[bool],
-    adj_c: list[list[int]],
-    adj_w: list[list[float]],
-    adj_delay: list[list[int]],
-) -> tuple[list[float], list[float]]:
-
-    hist[i % H] = [X[r] for r in range(n)]
-
-    dx = [0.0] * n
-    dy = [0.0] * n
-
-    for r in range(n):
-        dx[r], dy[r] = compute_node(
-            i,
-            freq,
-            k,
-            H,
-            X[r],
-            Y[r],
-            hist,
-            is_node_active[r],
-            adj_c[r],
-            adj_w[r],
-            adj_delay[r],
-        )
-
-    return dx, dy
-
-
-# Generator for Euler-Maruyama integration of the network
-def em_color(
     freq: float,
     k: float,
     dt: float,
@@ -160,20 +121,30 @@ def em_color(
     adj_c: list[list[int]],
     adj_w: list[list[float]],
     adj_delay: list[list[int]],
-) -> Generator[tuple[list[float], list[float]], None, None]:
-    n = len(x0)
+) -> tuple[list[float], list[float]]:
+    dx = [0.0] * n
+    dy = [0.0] * n
 
-    i = 0
-    while True:
-        yield x0, y0
-        i += 1
-        dx, dy = f(
-            n, i, freq, k, x0, y0, H, hist, is_node_active, adj_c, adj_w, adj_delay
+    for r in range(n):
+        dx[r], dy[r] = compute_node(
+            i,
+            freq,
+            k,
+            H,
+            x0[r],
+            y0[r],
+            hist,
+            is_node_active[r],
+            adj_c[r],
+            adj_w[r],
+            adj_delay[r],
         )
 
-        for r in range(n):
-            x0[r] += dt * dx[r]
-            y0[r] += dt * dy[r]
+    for r in range(n):
+        x0[r] += dt * dx[r]
+        y0[r] += dt * dy[r]
+
+    return x0, y0
 
 
 # Main simulation function
@@ -198,10 +169,6 @@ def simulate(
     x0 = [0.0 for _ in range(n)]
     y0 = [0.0 for _ in range(n)]
 
-    gen = em_color(
-        freq, k, dt, x0, y0, H, hist, is_node_active, adj_c, adj_w, adj_delay
-    )
-
     Xs: list[list[list[float]]] = []
 
     # Compile the jit functions
@@ -210,15 +177,19 @@ def simulate(
     compute_derivatives(1.0, 1.0, 1.0, 1.0)
 
     start = time.time()
-    for t in range(steps):
-        x, y = next(gen)
+    for i in range(steps):
+        x, y = step(
+            n, i, freq, k, dt, x0, y0, H, hist, is_node_active, adj_c, adj_w, adj_delay
+        )
+
+        hist[(i + 1) % H] = [x0[r] for r in range(n)]
 
         # Set initial conditions for first two steps
-        if t == 0:
+        if i == 0:
             for r in range(n):
                 x[r] = -1.0
                 y[r] = -1.0
-        elif t == 1:
+        elif i == 1:
             for r in range(n):
                 r1 = 0.5
                 r2 = 0.5
