@@ -2,9 +2,6 @@ import time
 import numba  # type: ignore
 import numpy as np
 
-max_workers = 8
-threading_enabled = True
-
 
 # Prepare adjacency and delay structures for the network
 def wm_ring_params(
