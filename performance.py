@@ -4,6 +4,7 @@ from base import simulation as base_simulation
 from original import simulation as original_simulation
 from base_single_ncv import simulation as base_single_ncv_simulation
 from parallel import simulation as parallel_simulation
+from parallel_jit import simulation as parallel_jit_simulation
 from tqdm import tqdm
 
 W, D = data.tvb76_weights_lengths()
@@ -20,6 +21,7 @@ timings_base: list[float] = []
 timings_original: list[float] = []
 timings_base_single_ncv: list[float] = []
 timings_parallel: list[float] = []
+timings_parallel_jit: list[float] = []
 
 for dt in tqdm(dt_values):
     T_base, Xs_base, duration_base = base_simulation.simulate(
@@ -42,12 +44,18 @@ for dt in tqdm(dt_values):
     )
     timings_parallel.append(duration_parallel)
 
+    T_parallel_jit, Xs_parallel_jit, duration_parallel_jit = (
+        parallel_jit_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)
+    )
+    timings_parallel_jit.append(duration_parallel_jit)
+
 
 plt.figure(figsize=(10, 6))  # type: ignore
 plt.plot(dt_values, timings_base, label="Base Simulation", marker="o")  # type: ignore
 plt.plot(dt_values, timings_original, label="Original Simulation", marker="o")  # type: ignore
 plt.plot(dt_values, timings_base_single_ncv, label="Base NCV=1 Simulation", marker="o")  # type: ignore
 plt.plot(dt_values, timings_parallel, label="Parallel Simulation", marker="o")  # type: ignore
+plt.plot(dt_values, timings_parallel_jit, label="Parallel JIT Simulation", marker="o")  # type: ignore
 plt.xlabel("Time Step (dt)")  # type: ignore
 plt.ylabel("Time (seconds)")  # type: ignore
 plt.title("Simulation Timing Comparison")  # type: ignore
