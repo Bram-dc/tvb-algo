@@ -1,0 +1,14 @@
+X
+    represents the membrane potential of the neuron (excitatory or inhibitory).
+
+Y
+    represents the synaptic activity or some other state variable related to the neuron's activity.
+
+C
+    is the synaptic input received from other neurons in the network, which is derived from the postsynaptic potential from other regions.
+
+K
+    is the coupling constant, determining the strength of the interaction between the regions.
+
+f and g
+    are functions of the state variables (e.g., nonlinearity and coupling) and can be represented in the equations that govern neural dynamics.
