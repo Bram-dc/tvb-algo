@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from lib import data, plot
-from parallel import simulation
+from parallel_jit import simulation
 from tqdm import tqdm
 
 
