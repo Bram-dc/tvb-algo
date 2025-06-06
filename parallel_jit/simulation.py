@@ -12,12 +12,11 @@ def wm_ring_params(
     dt: float,
     cut: float = 0.0,
 ) -> tuple[
-    int,
-    list[list[float]],
     list[bool],
     list[list[int]],
     list[list[float]],
     list[list[int]],
+    int,
 ]:
     n = len(W)
 
@@ -46,14 +45,11 @@ def wm_ring_params(
         adj_w.append(adj_w_row)
         adj_delay.append(adj_delay_row)
 
-    H = max_delay + 1  # History length needed for delays
-    hist = [[0.0 for _ in range(n)] for _ in range(H)]
-
     active_nodes = [r for r, c in enumerate(adj_c) if c]
 
     is_node_active = [True if r in active_nodes else False for r in range(n)]
 
-    return H, hist, is_node_active, adj_c, adj_w, adj_delay
+    return is_node_active, adj_c, adj_w, adj_delay, max_delay
 
 
 # Pre-synaptic function: computes input from neuron j to neuron i
@@ -161,9 +157,12 @@ def simulate(
 
     D_speed = [[D[r][c] / speed for c in range(n)] for r in range(n)]
 
-    H, hist, is_node_active, adj_c, adj_w, adj_delay = wm_ring_params(
+    is_node_active, adj_c, adj_w, adj_delay, max_delay = wm_ring_params(
         W, D_speed, dt, cut=0.0
     )
+
+    H = max_delay + 1  # History length needed for delays
+    hist = [[0.0 for _ in range(n)] for _ in range(H)]
 
     steps = int(tf / dt)
     x0 = [0.0 for _ in range(n)]
