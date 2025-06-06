@@ -4,6 +4,7 @@ from original import simulation as original_simulation
 from base_single_ncv import simulation as base_single_ncv_simulation
 from parallel import simulation as parallel_simulation
 from jit import simulation as jit_simulation
+from jit_parallel import simulation as jit_parallel_simulation
 from tqdm import tqdm
 import numpy as np
 
@@ -33,6 +34,9 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
         W_list, D_list, dt, tf, k, speed, freq
     )
     T_jit, Xs_jit, _ = jit_simulation.simulate(W_list, D_list, dt, tf, k, speed, freq)
+    T_jit_parallel, Xs_jit_parallel, _ = jit_parallel_simulation.simulate(
+        W_list, D_list, dt, tf, k, speed, freq
+    )
 
     # Compare results
     assert (
@@ -41,6 +45,7 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
         == len(T_base_single_ncv)
         == len(T_parallel)
         == len(T_jit)
+        == len(T_jit_parallel)
     ), f"Length mismatch in T for speed {speed}"
     assert (
         len(Xs_base)
@@ -48,10 +53,11 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
         == len(Xs_base_single_ncv)
         == len(Xs_parallel)
         == len(Xs_jit)
+        == len(Xs_jit_parallel)
     ), f"Length mismatch in Xs for speed {speed}"
 
-    for x_base, x_original, x_base_single_ncv, x_parallel, x_jit in zip(
-        Xs_base, Xs_original, Xs_base_single_ncv, Xs_parallel, Xs_jit
+    for x_base, x_original, x_base_single_ncv, x_parallel, x_jit, x_jit_parallel in zip(
+        Xs_base, Xs_original, Xs_base_single_ncv, Xs_parallel, Xs_jit, Xs_jit_parallel
     ):
         assert (
             len(x_base)
@@ -59,6 +65,7 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
             == len(x_base_single_ncv)
             == len(x_parallel)
             == len(x_jit)
+            == len(x_jit_parallel)
         ), f"Length mismatch in x for speed {speed}"
 
         for (
@@ -67,7 +74,10 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
             xi_base_single_ncv,
             xi_parallel,
             xi_jit,
-        ) in zip(x_base, x_original, x_base_single_ncv, x_parallel, x_jit):
+            xi_jit_parallel,
+        ) in zip(
+            x_base, x_original, x_base_single_ncv, x_parallel, x_jit, x_jit_parallel
+        ):
             assert np.allclose(
                 xi_original, xi_base, atol=tolerance
             ), f"Mismatch in Xs for speed {speed} at {xi_original} vs {xi_base} (original vs base)"
@@ -80,6 +90,9 @@ for i, speed in tqdm(enumerate([1.0, 2.0, 10.0])):
             assert np.allclose(
                 xi_original, xi_jit, atol=tolerance
             ), f"Mismatch in Xs for speed {speed} at {xi_original} vs {xi_jit} (original vs jit)"
+            assert np.allclose(
+                xi_original, xi_jit_parallel, atol=tolerance
+            ), f"Mismatch in Xs for speed {speed} at {xi_original} vs {xi_jit_parallel} (original vs jit_parallel)"
 
 
 print("All tests passed successfully!")

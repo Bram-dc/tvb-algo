@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 from typing import Generator
 
-max_workers = 8
+max_workers = 32
 threading_enabled = True
 
 

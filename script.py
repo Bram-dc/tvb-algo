@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 
 def run_simulation():
-    W, D = data.tvb76_weights_lengths()
+    W, D = data.tvb998_weights_lengths()
     W_list = W.tolist()
     D_list = D.tolist()
 
