@@ -60,7 +60,7 @@ dt_values = [
 ]
 ```
 
-The different `dt` values are not that important for the performance comparison. Since none of the implementations are parallelized over time, the complexity will always be linear in terms of `dt`.
+The different `dt` values are not that important for the performance comparison. Since none of the implementations are parallelized over time, the complexity will always be dependent on `dt` by 1/`dt`.
 
 
 ---
@@ -128,3 +128,24 @@ I have testing each algorithm with three different datasets, each with a differe
 ---
 
 # Analysis
+
+In figures 1-3, we can see, as expected, that the performance trend follows 1/`dt`. This is not surprising, because there is no optimization done in the time loop.
+
+We can also notice that the the first and second **Base** implementations are very similar in performance. The **Base NCV=1** implementation is significantly faster than the original, as it is and optimized version of the first one. Both implementation are both performing worse than the original, as they are not using `NumPy` and are not optimized for performance.
+
+The **Parallel** implementation is the slowest of all implementations. The main reason for this is that the parallelization is done using threads. This create a lot of overhead, as the threads need to transfer data and synchronize with each other. The performance is slower even than the base implementation, which is not parallelized. The computation done by each seperate thread is not enough to overcome the overhead of the threads. You can see this in the code:
+```python
+def compute_derivatives(
+    x: float, y: float, c: float, freq: float
+) -> tuple[float, float]:
+    dx = freq * (x - x**3 / 3 + y) * 3.0
+    dy = freq * (1.01 - x + c) / 3.0
+
+    return dx, dy
+```
+
+The `compute_derivatives` function is that main calculation performed by each thread, and is not a heavy computation.
+
+The **JIT** implementation is has similar performance to the **Original** implementation, which uses `NumPy`. As the number of ROIs increases, the performance of the JIT implementation is a bit worse than the original. This is likely due to the fact that `NumPy` is quite well optimized for these kinds of operations.
+
+The **JIT Parallel** implementation is initially slower than the **JIT** implementation, but as the number of ROIs increases, it becomes faster. This is because the `prange` function used in the JIT implementation allows for parallelization of the computation across efficiently. At higher ROI counts (giving a better parallelization), the performance of the JIT Parallel implementation is noticeably better than the other implementations. It never reaches the performance of the original, `NumPy` implementation, but it is significantly faster than the other implementations.
