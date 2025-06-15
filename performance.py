@@ -8,8 +8,8 @@ from jit import simulation as jit_simulation
 from jit_parallel import simulation as jit_parallel_simulation
 from tqdm import tqdm
 
-# W, D = data.tvb76_weights_lengths()
-W, D = data.tvb998_weights_lengths()
+W, D = data.tvb76_weights_lengths()
+# W, D = data.tvb998_weights_lengths()
 W_list = W.tolist()
 D_list = D.tolist()
 
@@ -18,7 +18,7 @@ tf = 150.0
 k = 1e-3
 freq = 1.0
 
-dt_values = [0.01, 0.02, 0.05, 0.1, 0.2]
+dt_values = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2]
 timings_base: list[float] = []
 timings_original: list[float] = []
 timings_base_single_ncv: list[float] = []
@@ -57,6 +57,24 @@ for dt in tqdm(dt_values):
     )
     timings_jit_parallel.append(duration_jit_parallel)
 
+# Print a table of timings
+print(
+    f"{'dt':<10} {'Base':<15} {'Original':<15} {'Base NCV=1':<15} {'Parallel':<15} {'JIT':<15} {'JIT Parallel':<15}"
+)
+for dt, base, original, base_ncv, parallel, jit, jit_parallel in zip(
+    dt_values,
+    timings_base,
+    timings_original,
+    timings_base_single_ncv,
+    timings_parallel,
+    timings_jit,
+    timings_jit_parallel,
+):
+    print(
+        f"{dt:<10} {base:<15.4f} {original:<15.4f} {base_ncv:<15.4f} {parallel:<15.4f} {jit:<15.4f} {jit_parallel:<15.4f}"
+    )
+
+# Plot
 plt.figure(figsize=(10, 6))  # type: ignore
 plt.plot(dt_values, timings_base, label="Base Simulation", marker="o")  # type: ignore
 plt.plot(dt_values, timings_original, label="Original Simulation", marker="o")  # type: ignore
@@ -66,7 +84,7 @@ plt.plot(dt_values, timings_jit, label="JIT Simulation", marker="o")  # type: ig
 plt.plot(dt_values, timings_jit_parallel, label="JIT Parallel Simulation", marker="o")  # type: ignore
 plt.xlabel("Time Step (dt)")  # type: ignore
 plt.ylabel("Time (seconds)")  # type: ignore
-plt.title("Simulation Timing Comparison")  # type: ignore
+plt.title("Simulation Timing Comparison (76 ROIs connectome)")  # type: ignore
 plt.legend()  # type: ignore
 plt.grid()  # type: ignore
 plt.tight_layout()  # type: ignore

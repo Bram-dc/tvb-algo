@@ -107,7 +107,7 @@ def step(
     dx = np.zeros(n)
     dy = np.zeros(n)
 
-    for r in range(n):
+    for r in numba.prange(n):
         dx[r], dy[r] = compute_node(
             n,
             i,

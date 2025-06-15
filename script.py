@@ -1,15 +1,15 @@
 import matplotlib.pyplot as plt
 from lib import data, plot
-from jit import simulation
+from jit_parallel import simulation
 from tqdm import tqdm
 
 
 def run_simulation():
-    W, D = data.tvb998_weights_lengths()
+    W, D = data.tvb76_weights_lengths()
     W_list = W.tolist()
     D_list = D.tolist()
 
-    dt = 0.05
+    dt = 0.2
     tf = 150.0
     k = 1e-3
     speed = 1.0
