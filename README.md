@@ -131,6 +131,9 @@ I have testing each algorithm with three different datasets, each with a differe
 
 In figures 1-3, we can see, as expected, that the performance trend follows 1/`dt`. This is not surprising, because there is no optimization done in the time loop.
 
+
+The most interesting results are in figure 4, where we can see the performance of the different implementations for a fixed `dt` value of 0.005 seconds, over a different number of ROIs.
+
 We can also notice that the the first and second **Base** implementations are very similar in performance. The **Base NCV=1** implementation is significantly faster than the original, as it is and optimized version of the first one. Both implementation are both performing worse than the original, as they are not using `NumPy` and are not optimized for performance.
 
 The **Parallel** implementation is the slowest of all implementations. The main reason for this is that the parallelization is done using threads. This create a lot of overhead, as the threads need to transfer data and synchronize with each other. The performance is slower even than the base implementation, which is not parallelized. The computation done by each seperate thread is not enough to overcome the overhead of the threads. You can see this in the code:
