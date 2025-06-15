@@ -144,7 +144,7 @@ def compute_derivatives(
     return dx, dy
 ```
 
-The `compute_derivatives` function is that main calculation performed by each thread, and is not a heavy computation.
+The `compute_derivatives` function is the main calculation performed by each thread, and is not a heavy computation.
 
 The **JIT** implementation is has similar performance to the **Original** implementation, which uses `NumPy`. As the number of ROIs increases, the performance of the JIT implementation is a bit worse than the original. This is likely due to the fact that `NumPy` is quite well optimized for these kinds of operations.
 
