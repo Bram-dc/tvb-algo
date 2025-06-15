@@ -70,6 +70,7 @@ The different `dt` values are not that important for the performance comparison.
 I have testing each algorithm with three different datasets, each with a different number of connected ROIs (Regions of Interest). We ran the algorithm with various time steps (`dt`) to test the performance for increasing complexity. A smaller `dt` value means more iterations and a longer computation time.
 
 ### Table 1: Results for 76 ROIs
+in seconds
 
 | **dt**  | **Base** | **Original** | **Base NCV=1** | **Parallel** | **JIT** | **JIT Parallel** |
 |---------|----------|--------------|----------------|--------------|---------|------------------|
@@ -86,6 +87,7 @@ I have testing each algorithm with three different datasets, each with a differe
 ---
 
 ### Table 2: Results for 192 ROIs
+in seconds
 
 | **dt**  | **Base** | **Original** | **Base NCV=1** | **Parallel** | **JIT** | **JIT Parallel** |
 |---------|----------|--------------|----------------|--------------|---------|------------------|
@@ -102,6 +104,7 @@ I have testing each algorithm with three different datasets, each with a differe
 ---
 
 ### Table 3: Results for 998 ROIs
+in seconds
 
 | **dt**  | **Base** | **Original** | **Base NCV=1** | **Parallel** | **JIT** | **JIT Parallel** |
 |---------|----------|--------------|----------------|--------------|---------|------------------|
