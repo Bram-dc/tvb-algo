@@ -156,7 +156,7 @@ The `compute_derivatives` function is the main calculation performed by each thr
 
 The **JIT** implementation is has similar performance to the **Original** implementation, which uses `NumPy`. As the number of ROIs increases, the performance of the JIT implementation is a bit worse than the original. This is likely due to the fact that `NumPy` is quite well optimized for these kinds of operations.
 
-The **JIT Parallel** implementation is initially slower than the **JIT** implementation, but as the number of ROIs increases, it becomes faster. This is because the `prange` function used in the JIT implementation allows for parallelization of the computation across efficiently. At higher ROI counts (giving a better parallelization), the performance of the JIT Parallel implementation is noticeably better than the other implementations. It never reaches the performance of the original, `NumPy` implementation, but it is significantly faster than the other implementations.
+The **JIT Parallel** implementation is initially slower than the **JIT** implementation, but as the number of ROIs increases, it becomes faster. This is because the `prange` function used in the JIT implementation allows for parallelization of the computation efficiently. At higher ROI counts (giving a better parallelization), the performance of the JIT Parallel implementation is noticeably better than the other implementations. It never reaches the performance of the original, `NumPy` implementation, but it is significantly faster than the other implementations.
 
 ---
 
