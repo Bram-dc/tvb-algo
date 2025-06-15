@@ -18,7 +18,7 @@ plt.plot(roi_values, timings_jit_parallel, label="JIT Parallel Simulation", mark
 plt.xlabel("ROIs")  # type: ignore
 plt.ylabel("Time (seconds)")  # type: ignore
 plt.yscale("log")  # type: ignore
-plt.title("Simulation Timing Comparison per ROI (dt = 0.005)")  # type: ignore
+plt.title("Simulation Timing Comparison per # of ROI (dt = 0.005)")  # type: ignore
 plt.legend()  # type: ignore
 plt.grid()  # type: ignore
 plt.tight_layout()  # type: ignore
