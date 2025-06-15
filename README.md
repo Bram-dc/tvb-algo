@@ -118,6 +118,8 @@ in seconds
 *Figure 3: Performance Comparison for 998 ROIs*
 ![Figure_998](assets/Figure_998.png)
 
+---
+
 ### Table 4: Results for dt = 0.005 per ROI Count
 | **ROIs** | **Base** | **Original** | **Base NCV=1** | **Parallel** | **JIT** | **JIT Parallel** |
 |----------|----------|--------------|----------------|--------------|---------|------------------|
