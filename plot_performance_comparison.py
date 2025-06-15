@@ -15,7 +15,7 @@ plt.plot(roi_values, timings_base_single_ncv, label="Base NCV=1 Simulation", mar
 plt.plot(roi_values, timings_parallel, label="Parallel Simulation", marker="o")  # type: ignore
 plt.plot(roi_values, timings_jit, label="JIT Simulation", marker="o")  # type: ignore
 plt.plot(roi_values, timings_jit_parallel, label="JIT Parallel Simulation", marker="o")  # type: ignore
-plt.xlabel("ROIs")  # type: ignore
+plt.xlabel("# of ROIs")  # type: ignore
 plt.ylabel("Time (seconds)")  # type: ignore
 plt.yscale("log")  # type: ignore
 plt.title("Simulation Timing Comparison per # of ROI (dt = 0.005)")  # type: ignore
