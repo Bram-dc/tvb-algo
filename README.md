@@ -38,6 +38,31 @@ In this implementation, I used the `numba` library to compile the Python code to
 ### 6. **JIT + Parallel**
 This version combines the `numba` library with parallelization. It uses the `prange` function to parallelize the computation across multiple CPU cores. This approach maximizes performance by compiling the code to machine code and using parallel computation.
 
+
+## Parallelization
+The part of the code that could really benefit from parallelization is the loop computes the states of the ROIs. Each ROI can be computed independently, making it possible to do parallel work. The part of the code that iterates over time can not be parallelized, as it depends on the previous state of the system.
+
+To rank the performance of the implementations, I used the following variables:
+```python
+
+speed = 1.0
+tf = 150.0
+k = 1e-3
+freq = 1.0
+
+dt_values = [
+    0.005,
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.2,
+]
+```
+
+The different `dt` values are not that important for the performance comparison. Since none of the implementations are parallelized over time, the complexity will always be linear in terms of `dt`.
+
+
 ---
 
 # Results
@@ -90,4 +115,16 @@ I have testing each algorithm with three different datasets, each with a differe
 *Figure 3: Performance Comparison for 998 ROIs*
 ![Figure_998](assets/Figure_998.png)
 
+### Table 4: Results for dt = 0.005 per ROI Count
+| **ROIs** | **Base** | **Original** | **Base NCV=1** | **Parallel** | **JIT** | **JIT Parallel** |
+|----------|----------|--------------|----------------|--------------|---------|------------------|
+| 76       | 18.2333  | 0.6949       | 8.1738         | 30.8425      | 0.3373  | 8.2826           |
+| 192      | 27.9790  | 1.0737       | 15.7172        | 70.5493      | 1.5268  | 8.9790           |
+| 998      | 552.1261 | 12.5575      | 290.7044       | 576.0387     | 54.5474 | 16.5065          |
+
+*Figure 4: Performance Comparison for dt = 0.005 per ROI Count*
+![Figure_dt_0.005](assets/Figure_per_connectome.png)
+
 ---
+
+# Analysis
