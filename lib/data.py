@@ -56,8 +56,8 @@ def tvb192_weights_lengths():
         ) as zf:
             np.savez(
                 cache_fname,
-                W=np.loadtxt(zf.open("weights.txt")),
-                D=np.loadtxt(zf.open("tract_lengths.txt")),
+                W=np.loadtxt(zf.open("connectivity_192/weights.txt")),
+                D=np.loadtxt(zf.open("connectivity_192/tract_lengths.txt")),
             )
     npz = np.load(cache_fname)
 

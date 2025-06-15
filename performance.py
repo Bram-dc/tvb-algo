@@ -19,7 +19,14 @@ tf = 150.0
 k = 1e-3
 freq = 1.0
 
-dt_values = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2]
+dt_values = [
+    0.005,
+    0.01,
+    0.02,
+    0.05,
+    0.1,
+    0.2,
+]
 timings_base: list[float] = []
 timings_original: list[float] = []
 timings_base_single_ncv: list[float] = []
