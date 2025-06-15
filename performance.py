@@ -9,6 +9,7 @@ from jit_parallel import simulation as jit_parallel_simulation
 from tqdm import tqdm
 
 W, D = data.tvb76_weights_lengths()
+# W, D = data.tvb192_weights_lengths()
 # W, D = data.tvb998_weights_lengths()
 W_list = W.tolist()
 D_list = D.tolist()
